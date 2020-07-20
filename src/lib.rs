@@ -32,7 +32,7 @@ pub struct LprOptions {
     #[structopt(short = "m")]
     mail: bool,
     #[serde(default)]
-    #[structopt(short = "o")]
+    #[structopt(short = "o", number_of_values = 1)]
     options: Vec<String>,
     #[serde(default)]
     #[structopt(short = "p")]
