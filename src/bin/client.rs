@@ -4,12 +4,12 @@ use reqwest::{multipart, Client};
 use structopt::StructOpt;
 use tokio::fs;
 
-const URL: &str = "http://localhost";
-
 #[derive(StructOpt, Debug)]
 pub struct LprArgs {
     #[structopt(flatten)]
     options: LprOptions,
+    #[structopt(long = "remote")]
+    remote: String,
     files: Vec<std::path::PathBuf>,
 }
 
@@ -40,11 +40,12 @@ impl LprArgs {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = LprArgs::from_args();
+    let remote = args.remote.clone();
     let form = args.to_form().await?;
 
     let client = Client::new();
     client
-        .post(&format!("{}:{}", URL, PORT))
+        .post(&format!("http://{}:{}", remote, PORT))
         .multipart(form)
         .send()
         .await
