@@ -22,15 +22,17 @@ impl LprArgs {
         );
 
         for file_name in self.files {
+            eprintln!("Reading file {:?}", file_name);
             let file = fs::read(&file_name).await.with_context(|| {
                 format!("could not read input file {}", &file_name.to_string_lossy())
             })?;
             let file_name = file_name.to_string_lossy().to_string();
 
+            eprintln!("Added to form {:?}", file_name);
             form = form.part(
                 format!("file:{}", file_name),
                 multipart::Part::bytes(file).file_name(file_name),
-            )
+            );
         }
 
         Ok(form)
@@ -43,6 +45,7 @@ async fn main() -> anyhow::Result<()> {
     let remote = args.remote.clone();
     let form = args.to_form().await?;
 
+    eprintln!("Starting print request");
     let client = Client::new();
     client
         .post(&format!("http://{}:{}", remote, PORT))
@@ -52,6 +55,7 @@ async fn main() -> anyhow::Result<()> {
         .with_context(|| "could not send request to server")?
         .error_for_status()
         .with_context(|| "request failed")?;
+    eprintln!("Sent print request");
 
     Ok(())
 }
