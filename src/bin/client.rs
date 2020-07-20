@@ -24,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::new();
     client
         .post(&format!("http://{}:{}", args.remote, PORT))
-        .json(&args)
+        .json(&args.options)
         .send()
         .await
         .with_context(|| "could not send request to server")?
