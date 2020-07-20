@@ -3,44 +3,68 @@ use std::borrow::Cow;
 
 pub const PORT: u16 = 1468;
 
-#[cfg_attr(feature = "structopt", derive(structopt::StructOpt))]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, structopt::StructOpt)]
 pub struct LprOptions {
-    #[cfg_attr(feature = "structopt", structopt(short = "E"))]
+    #[serde(default)]
+    #[structopt(short = "E")]
     encrypt: bool,
-    #[cfg_attr(feature = "structopt", structopt(short = "H"))]
+    #[structopt(short = "H")]
     server: Option<String>,
-    #[cfg_attr(feature = "structopt", structopt(short = "C"))]
+    #[structopt(short = "C")]
     name_c: Option<String>,
-    #[cfg_attr(feature = "structopt", structopt(short = "J"))]
+    #[structopt(short = "J")]
     name_j: Option<String>,
-    #[cfg_attr(feature = "structopt", structopt(short = "T"))]
+    #[structopt(short = "T")]
     name_t: Option<String>,
-    #[cfg_attr(feature = "structopt", structopt(short = "P"))]
+    #[structopt(short = "P")]
     printer: Option<String>,
-    #[cfg_attr(feature = "structopt", structopt(short = "U"))]
+    #[structopt(short = "U")]
     username: Option<String>,
-    #[cfg_attr(feature = "structopt", structopt(short = "#"))]
+    #[structopt(short = "#")]
     copies: Option<u64>,
-    #[cfg_attr(feature = "structopt", structopt(short = "h"))]
+    #[serde(default)]
+    #[structopt(short = "h")]
     no_banner: bool,
-    #[cfg_attr(feature = "structopt", structopt(short = "l"))]
+    #[serde(default)]
+    #[structopt(short = "l")]
     no_filtering: bool,
-    #[cfg_attr(feature = "structopt", structopt(short = "m"))]
+    #[serde(default)]
+    #[structopt(short = "m")]
     mail: bool,
-    #[cfg_attr(feature = "structopt", structopt(short = "o"))]
+    #[serde(default)]
+    #[structopt(short = "o")]
     options: Vec<String>,
-    #[cfg_attr(feature = "structopt", structopt(short = "p"))]
+    #[serde(default)]
+    #[structopt(short = "p")]
     with_header: bool,
-    #[cfg_attr(feature = "structopt", structopt(short = "q"))]
+    #[serde(default)]
+    #[structopt(short = "q")]
     hold: bool,
-    #[cfg_attr(feature = "structopt", structopt(short = "r"))]
+    #[serde(default)]
+    #[structopt(short = "r")]
     delete_after: bool,
+    files: Vec<std::path::PathBuf>,
 }
 
 impl LprOptions {
-    pub fn to_options(self) -> Vec<Cow<'static, str>> {
-        let mut args: Vec<Cow<_>> = Vec::new();
+    pub fn truncate(&mut self, prefix: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let prefix = prefix.as_ref();
+        for file in &mut self.files {
+            let canon = file.canonicalize()?;
+            canon.strip_prefix(prefix)?;
+            *file = canon;
+        }
+        Ok(())
+    }
+    pub fn rebuild(&mut self, prefix: impl AsRef<std::path::Path>) {
+        let prefix = prefix.as_ref();
+        for file in &mut self.files {
+            *file = prefix.join(&file);
+        }
+    }
+
+    pub fn to_options(self) -> Vec<std::ffi::OsString> {
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
         for option in self.options {
             args.push("-o".into());
             args.push(option.into());
@@ -93,6 +117,9 @@ impl LprOptions {
         if let Some(name_t) = self.name_t {
             args.push("-T".into());
             args.push(name_t.into());
+        }
+        for file in self.files {
+            args.push(file.into());
         }
         args
     }

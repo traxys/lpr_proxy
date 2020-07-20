@@ -589,7 +589,6 @@ dependencies = [
  "serde",
  "serde_json",
  "structopt",
- "tempfile",
  "tokio",
  "warp",
 ]
@@ -1112,6 +1111,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "serde",
+ "serde_json",
  "serde_urlencoded",
  "tokio",
  "tokio-tls",
