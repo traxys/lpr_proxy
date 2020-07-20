@@ -19,6 +19,8 @@ async fn handle_form(mut form: multipart::FormData) -> Result<impl warp::Reply, 
     let mut options: Option<LprOptions> = None;
     let mut files = Vec::new();
 
+    eprintln!("Recieved print job");
+
     let dir = tempdir()
         .map_err(Error::CreateTempDir)
         .map_err(reject::custom)?;
@@ -65,15 +67,18 @@ async fn handle_form(mut form: multipart::FormData) -> Result<impl warp::Reply, 
     let options = options.map(|o| o.to_options()).unwrap_or_else(Vec::new);
     let options = options.iter().map(|cow| -> &str { &*cow });
 
+    eprintln!("Printing files: {:?}", files);
     let mut command = Command::new("lpr");
     command.args(options);
     command.args(files.into_iter());
-    command
+    let status = command
         .spawn()
         .expect("could not run command")
         .wait_with_output()
         .await
         .expect("error running command");
+    eprintln!("Finished with status: {:?}", status);
+
 
     Ok(warp::reply::with_status(
         "added to lpr",
