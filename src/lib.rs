@@ -51,8 +51,7 @@ impl LprOptions {
         let prefix = prefix.as_ref();
         for file in &mut self.files {
             let canon = file.canonicalize()?;
-            canon.strip_prefix(prefix)?;
-            *file = canon;
+            *file = canon.strip_prefix(prefix)?.to_owned();
         }
         Ok(())
     }
