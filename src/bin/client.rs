@@ -1,5 +1,5 @@
 use anyhow::Context;
-use lpr_proxy::{LprOptions, PORT};
+use lpr_proxy::{LprOptions, PORT_STR};
 use reqwest::Client;
 use serde::Serialize;
 use structopt::StructOpt;
@@ -10,6 +10,8 @@ pub struct LprArgs {
     options: LprOptions,
     #[structopt(long = "remote")]
     remote: String,
+    #[structopt(long = "port", default_value = PORT_STR)]
+    port: u16,
     #[structopt(long = "prefix")]
     prefix: Option<String>,
 }
@@ -23,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::new();
     client
-        .post(&format!("http://{}:{}", args.remote, PORT))
+        .post(&format!("http://{}:{}", args.remote, args.port))
         .json(&args.options)
         .send()
         .await

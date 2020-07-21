@@ -1,7 +1,17 @@
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
-pub const PORT: u16 = 1468;
+// Carefull, this macro only stringifies, you should not give it anythin else than int litterals
+macro_rules! const_and_str {
+    ($($vis:vis const ($name:ident | $str_name:ident) : $ty:ty = $val:expr);+ $(;)?) => {
+        $(
+            $vis const $name: $ty = $val;
+            $vis const $str_name: &str = stringify!($val);
+        )+
+    };
+}
+const_and_str! {
+    pub const (PORT | PORT_STR): u16 = 1468;
+}
 
 #[derive(Debug, Serialize, Deserialize, structopt::StructOpt)]
 pub struct LprOptions {

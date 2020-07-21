@@ -1,4 +1,4 @@
-use lpr_proxy::LprOptions;
+use lpr_proxy::{LprOptions, PORT_STR};
 use std::sync::Arc;
 use structopt::StructOpt;
 use tokio::process::Command;
@@ -38,20 +38,24 @@ async fn handle_options(
 
 #[derive(StructOpt)]
 struct ServerArgs {
+    #[structopt(long, default_value = "127.0.0.1")]
+    listen: std::net::IpAddr,
+    #[structopt(long, default_value = PORT_STR)]
+    port: u16,
+    #[structopt(long)]
     prefix: Option<String>,
 }
 
 #[tokio::main]
 async fn main() {
     let args = Arc::new(ServerArgs::from_args());
-    let args = warp::any().map(move || args.clone());
+    let args_f = args.clone();
+    let args_filter = warp::any().map(move || args_f.clone());
 
     let lpr_proxy = body::content_length_limit(1024 * 4)
         .and(body::json())
-        .and(args)
+        .and(args_filter)
         .and_then(handle_options);
 
-    warp::serve(lpr_proxy)
-        .run(([127u8, 0, 0, 1], lpr_proxy::PORT))
-        .await
+    warp::serve(lpr_proxy).run((args.listen, args.port)).await
 }
